@@ -5,7 +5,7 @@ from typing import Optional
 import os
 from dotenv import load_dotenv
 import chromadb
-from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from groq import Groq
 
 load_dotenv()
@@ -22,13 +22,15 @@ app.add_middleware(
 
 CHROMA_PATH = os.getenv("CHROMA_PATH", "./chroma_db")
 client = chromadb.PersistentClient(path=CHROMA_PATH)
-local_ef = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+
+# DefaultEmbeddingFunction uses a tiny ONNX model (~30MB) — works within 512MB
+ef = DefaultEmbeddingFunction()
 
 try:
-    collection = client.get_collection(name="medical_docs", embedding_function=local_ef)
+    collection = client.get_collection(name="medical_docs", embedding_function=ef)
     print(f"Loaded collection with {collection.count()} documents")
 except Exception:
-    collection = client.get_or_create_collection(name="medical_docs", embedding_function=local_ef)
+    collection = client.get_or_create_collection(name="medical_docs", embedding_function=ef)
     print("Created new empty collection — run ingest.py first")
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -88,18 +90,11 @@ If the answer is not found in the sources, say so clearly — never fabricate me
 Be concise, accurate, and use plain language appropriate for clinical staff.
 End with a "Sources:" section listing which documents you referenced."""
 
-    user_message = f"""Question: {req.question}
-
-Context from medical documents:
-{context}
-
-Please answer the question based strictly on the above sources."""
-
     chat = groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",   # free, very capable
+        model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
+            {"role": "user", "content": f"Question: {req.question}\n\nContext:\n{context}"},
         ],
         max_tokens=1024,
         temperature=0.2,

@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import chromadb
-from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 import pypdf
 
 
@@ -45,19 +45,16 @@ def ingest(data_dir: str, chroma_path: str):
     pdfs = list(data_path.glob("**/*.pdf"))
 
     if not pdfs:
-        print(f"\nNo PDFs found in {data_dir}")
-        print("Add PDFs to the data/ folder\n")
+        print(f"\nNo PDFs found in {data_dir}\n")
         sys.exit(1)
 
     print(f"\nFound {len(pdfs)} PDF(s) in {data_dir}")
-    print("Loading embedding model (downloads ~80MB on first run)...")
 
-    local_ef = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-
+    ef = DefaultEmbeddingFunction()
     db = chromadb.PersistentClient(path=chroma_path)
     collection = db.get_or_create_collection(
         name="medical_docs",
-        embedding_function=local_ef,
+        embedding_function=ef,
         metadata={"hnsw:space": "cosine"}
     )
 
@@ -90,11 +87,10 @@ def ingest(data_dir: str, chroma_path: str):
 
     print(f"Ingestion complete! Added {total_chunks} new chunks.")
     print(f"Collection now has {collection.count()} total chunks.")
-    print("\nStart the backend: uvicorn main:app --reload")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MedBot PDF Ingestion")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="./data")
     parser.add_argument("--chroma-path", default="./chroma_db")
     args = parser.parse_args()
