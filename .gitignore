@@ -12,7 +12,7 @@ env/
 *.env
 
 # ChromaDB (don't commit local vector store)
-backend/chroma_db/
+#backend/chroma_db/
 
 # Node
 node_modules/
