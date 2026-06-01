@@ -2,8 +2,8 @@
 
 > Hospital staff spend 2+ hours/week hunting through policy PDFs. MedBot answers clinical questions in under 10 seconds, with cited sources from your own documents.
 
-**Stack:** FastAPI · ChromaDB · Claude claude-sonnet-4-20250514 · OpenAI Embeddings · React  
-**Deploy:** Railway (backend) + Vercel (frontend) · Free tiers · ~30 minutes
+**Stack:** FastAPI · ChromaDB · OpenAI Embeddings · React  
+**Deploy:** Render (backend) + Vercel (frontend)
 
 ![MedBot Demo](https://img.shields.io/badge/Status-Live-brightgreen) 
 
